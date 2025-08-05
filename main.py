@@ -1,10 +1,28 @@
+from eda import data_overview, check_missing_and_duplicates, impute_missing_values
 from load_data import load_data
-from eda import data_overview, check_missing_and_duplicates
+from preprocessing import handle_bloodpressure_anomalies, drop_irrelevant_features
+from transform.feature_engineering import full_feature_engineering
+from logger_config import setup_logger
 
-claim_df = load_data("data/health_insurance.csv")
+logger = setup_logger(__name__)
 
-# EDA Step 1: Basic Checks
-data_overview(claim_df)
+def main():
+    logger.info(" Starting Insurance Claim Prediction Pipeline...")
 
-# EDA Step 2: Missing and Duplicate Check
-claim_df = check_missing_and_duplicates(claim_df)
+    df = load_data("data/health_insurance.csv")
+    if df is None:
+        logger.error(" Terminating pipeline due to data loading failure.")
+        return
+
+    df = check_missing_and_duplicates(df)
+    df = impute_missing_values(df)
+    df = handle_bloodpressure_anomalies(df)
+    df = drop_irrelevant_features(df)
+    df = full_feature_engineering(df)
+
+    df.to_csv("processed_data.csv", index=False)
+    logger.info(" Final processed data saved to processed_data.csv")
+
+if __name__ == "__main__":
+    main()
+
